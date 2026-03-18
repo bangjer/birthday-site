@@ -1028,11 +1028,72 @@ function showFinale() {
   const el = document.getElementById('finale');
   el.classList.add('finale-visible');
 
+  // Build scattered photos
+  buildOutroGallery();
+
   // Stagger inner animations
   setTimeout(() => el.querySelector('.finale-glow').classList.add('glow-on'), 300);
   setTimeout(() => el.querySelector('.cake-wrap').classList.add('cake-on'), 700);
   setTimeout(() => el.querySelector('.arc-text').classList.add('arc-on'), 1400);
   setTimeout(() => el.querySelector('.finale-sub').classList.add('sub-on'), 2000);
+}
+
+/* ── Outro gallery builder ──────────────────────────
+   PHOTO POSITIONS: each entry is [top%, left%, width-px, rotation-deg]
+   Adjust these to reposition photos if needed.
+   Total 21 photos mapped to outro1.jpg … outro21.jpg
+──────────────────────────────────────────────────── */
+function buildOutroGallery() {
+  const positions = [
+    // top-left cluster
+    [ 3,  2,  88,  -6],
+    [ 7, 11,  72,   4],
+    [16,  1,  80,  -3],
+    [22, 10,  68,   7],
+    // top-right cluster
+    [ 2, 78,  85,   5],
+    [ 9, 88,  70,  -7],
+    [18, 79,  78,   3],
+    [26, 89,  64,  -4],
+    // mid-left
+    [38,  0,  82,   6],
+    [46,  9,  70,  -5],
+    [55,  1,  76,   3],
+    // mid-right
+    [40, 83,  80,  -6],
+    [50, 91,  66,   5],
+    [58, 82,  74,  -3],
+    // bottom-left cluster
+    [68,  3,  78,   7],
+    [76, 12,  68,  -5],
+    [84,  2,  82,   4],
+    [91, 11,  64,  -6],
+    // bottom-right cluster
+    [66, 80,  76,  -4],
+    [75, 89,  70,   6],
+    [86, 81,  80,  -5],
+  ];
+
+  const gallery = document.getElementById('outro-gallery');
+  gallery.innerHTML = '';
+
+  positions.forEach(([top, left, w, rot], i) => {
+    const img = document.createElement('img');
+    img.className = 'outro-photo';
+    img.src = `outro${i + 1}.jpg`;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.style.cssText = `
+      top:${top}%; left:${left}%;
+      --w:${w}px; --r:${rot}deg;
+      --dur:${4 + (i % 5)}s;
+      --delay2:${(i * 0.18).toFixed(2)}s;
+    `;
+    gallery.appendChild(img);
+
+    // Staggered fade-in: starts after cake reveal (2.4s base + 0.15s per photo)
+    setTimeout(() => img.classList.add('photo-on'), 2400 + i * 150);
+  });
 }
 </script>
 
@@ -1043,6 +1104,9 @@ function showFinale() {
      Edit the sub text: change the <p class="finale-sub"> content
 ============================================= -->
 <div id="finale">
+  <!-- Scattered memory photos — populated by JS -->
+  <div class="outro-gallery" id="outro-gallery"></div>
+
   <div class="finale-glow"></div>
 
   <!-- Arc birthday text — EDIT TEXT HERE -->
@@ -1285,8 +1349,43 @@ function showFinale() {
   margin-top: 2px;
 }
 
-/* Sub message */
-.finale-sub {
+/* ── Outro gallery — scattered photos around cake ── */
+.outro-gallery {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1; /* below cake (z-index 2+) */
+}
+
+.outro-photo {
+  position: absolute;
+  width: var(--w, 90px);
+  aspect-ratio: 3/4;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,0.12);
+  box-shadow: 0 4px 18px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,169,110,0.1);
+  border-radius: 3px;
+  opacity: 0;
+  filter: brightness(0.72) saturate(0.85);
+  transform: rotate(var(--r, 0deg)) translateY(0px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+}
+
+.outro-photo.photo-on {
+  opacity: 0.82;
+  animation: photoFloat var(--dur, 5s) ease-in-out infinite alternate var(--delay2, 0s);
+}
+
+@keyframes photoFloat {
+  from { transform: rotate(var(--r, 0deg)) translateY(0px); }
+  to   { transform: rotate(var(--r, 0deg)) translateY(-7px); }
+}
+
+/* Mobile: smaller photos */
+@media (max-width: 700px) {
+  .outro-photo { --w: 58px !important; }
+}
+
   margin-top: 1.8rem;
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
