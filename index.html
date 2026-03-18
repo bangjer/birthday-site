@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Happy Birthday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
+<style>
+  /* =============================================
+     CSS VARIABLES & RESET
+  ============================================= */
+  :root {
+    --bg:       #0e0c0b;
+    --surface:  #1a1714;
+    --card-bg:  #1e1b18;
+    --cream:    #f0e8dc;
+    --blush:    #d4a0a0;
+    --gold:     #c9a96e;
+    --muted:    #7a6e65;
+    --border:   rgba(201,169,110,0.18);
+    --glow:     rgba(201,169,110,0.25);
+    --font-h:   'Playfair Display', Georgia, serif;
+    --font-b:   'Cormorant Garamond', Georgia, serif;
+    --trans:    0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: var(--font-b);
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.35;
+  }
+
+  /* =============================================
+     SECTION 1 — OPENING SLIDESHOW
+  ============================================= */
+  #slideshow {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 1.4s ease;
+  }
+
+  #slideshow.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    overflow: hidden;
+  }
+
+  .slide.active { opacity: 1; }
+
+  .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.08);
+    animation: none;
+  }
+
+  .slide.active img {
+    animation: kenburns 7s ease forwards;
+  }
+
+  @keyframes kenburns {
+    from { transform: scale(1.08) translate(0,0); }
+    to   { transform: scale(1.0) translate(-1%,-0.5%); }
+  }
+
+  /* dark vignette over slides */
+  .slide::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.72) 100%);
+  }
+
+  /* Per-slide caption overlay */
+  #slide-caption {
+    position: absolute;
+    z-index: 10;
+    text-align: center;
+    pointer-events: none;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  #slide-caption .slide-heading {
+    font-family: var(--font-h);
+    font-size: clamp(2rem, 6vw, 4.6rem);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+    color: var(--cream);
+    text-shadow: 0 2px 40px rgba(0,0,0,0.6);
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.9s ease 0.4s, transform 0.9s ease 0.4s;
+    line-height: 1.2;
+  }
+
+  #slide-caption .slide-sub {
+    font-family: var(--font-b);
+    font-style: italic;
+    font-size: clamp(1rem, 2.4vw, 1.35rem);
+    color: var(--gold);
+    letter-spacing: 0.18em;
+    margin-top: 0.8rem;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.9s ease 0.75s, transform 0.9s ease 0.75s;
+  }
+
+  #slide-caption.caption-visible .slide-heading,
+  #slide-caption.caption-visible .slide-sub {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #slide-caption.caption-exit .slide-heading,
+  #slide-caption.caption-exit .slide-sub {
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Progress dots */
+  #slide-dots {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.4s, transform 0.4s;
+  }
+
+  .dot.active {
+    background: var(--gold);
+    transform: scale(1.4);
+  }
+
+  /* =============================================
+     SECTION 2 — MEMORY HUB
+     Desktop: CSS grid named-areas, 3×3, centre cell
+     holds the title; the 5 cards fill corner / edge
+     cells. No JS math → no overlaps.
+  ============================================= */
+  #hub {
+    min-height: 100vh;
+    padding: 4rem 2rem 5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 1.4s ease 0.2s;
+  }
+
+  #hub.visible { opacity: 1; }
+
+  /* ── Stage: 3-column × 3-row grid ── */
+  .hub-stage {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "c1  .   c2"
+      ".   mid  ."
+      "c3  .   c4";
+    gap: 2rem 2.4rem;
+    align-items: center;
+    justify-items: center;
+    width: min(960px, 94vw);
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* fifth card sits below the grid as a centred singleton */
+  .hub-stage::after {
+    content: '';
+    display: none; /* purely for decoration if needed */
+  }
+
+  /* ── Centre title ── */
+  .hub-centre {
+    grid-area: mid;
+    text-align: center;
+    z-index: 2;
+    padding: 1.4rem 1rem;
+    /* soft radial glow */
+    background: radial-gradient(ellipse at center, rgba(201,169,110,0.05) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hub-eyebrow {
+    font-size: 0.68rem;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.75;
+    margin-bottom: 0.6rem;
+  }
+
+  .hub-title {
+    font-family: var(--font-h);
+    font-size: clamp(1.7rem, 3.6vw, 3rem);
+    font-weight: 400;
+    color: var(--cream);
+    letter-spacing: 0.06em;
+    line-height: 1.15;
+  }
+
+  .hub-divider {
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+    margin: 0.9rem auto 0;
+    opacity: 0.4;
+  }
+
+  /* ── Cards container — lays cards into named grid areas ── */
+  #cards-container {
+    display: contents; /* cards participate directly in hub-stage grid */
+  }
+
+  /* Assign each card to a grid area by nth-child */
+  .memory-card:nth-child(1) { grid-area: c1; }
+  .memory-card:nth-child(2) { grid-area: c2; }
+  .memory-card:nth-child(3) { grid-area: c3; }
+  .memory-card:nth-child(4) { grid-area: c4; }
+  /* Card 5: centred below, spans nothing — injected after grid via flex row */
+  .memory-card:nth-child(5) {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  .memory-card {
+    position: relative;
+    width: clamp(145px, 17vw, 210px);
+    aspect-ratio: 3/4;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--card-bg);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  /* Hover: subtle lift only — no scale that causes collision */
+  .memory-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.65), 0 0 0 1px var(--gold);
+    border-color: var(--gold);
+    z-index: 5;
+  }
+
+  .card-thumb {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s ease;
+    filter: brightness(0.52);
+  }
+
+  .memory-card:hover .card-thumb {
+    transform: scale(1.06);
+    filter: brightness(0.65);
+  }
+
+  .card-info {
+    position: relative;
+    z-index: 2;
+    padding: 1.2rem 1rem 1rem;
+    background: linear-gradient(transparent, rgba(10,8,7,0.94) 55%);
+  }
+
+  .card-number {
+    font-size: 0.6rem;
+    letter-spacing: 0.38em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+    opacity: 0.8;
+  }
+
+  .card-title {
+    font-family: var(--font-h);
+    font-size: clamp(0.72rem, 1.4vw, 0.9rem);
+    font-weight: 400;
+    font-style: normal;
+    color: var(--cream);
+    line-height: 1.35;
+  }
+
+  .card-cta {
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+    opacity: 0.7;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .card-cta::after {
+    content: '→';
+    font-size: 0.85rem;
+    transition: transform 0.3s;
+  }
+
+  .memory-card:hover .card-cta::after {
+    transform: translateX(4px);
+  }
+
+  /* =============================================
+     GALLERY MODAL
+  ============================================= */
+  #gallery-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: rgba(8,7,6,0.97);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease;
+  }
+
+  #gallery-modal.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .gallery-inner {
+    width: 100%;
+    max-width: 900px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.4rem;
+  }
+
+  /* Close + header */
+  .gallery-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .gallery-chapter {
+    font-size: 0.68rem;
+    letter-spacing: 0.35em;
+    color: var(--gold);
+    text-transform: uppercase;
+    opacity: 0.75;
+  }
+
+  #gallery-title {
+    font-family: var(--font-h);
+    font-style: italic;
+    font-size: clamp(1.1rem, 3vw, 1.6rem);
+    color: var(--cream);
+    text-align: center;
+    flex: 1;
+    padding: 0 1rem;
+  }
+
+  #close-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.3s, border-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  #close-btn:hover { color: var(--cream); border-color: var(--gold); }
+
+  /* Image frame */
+  .gallery-frame {
+    width: 100%;
+    max-height: 52vh;
+    position: relative;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #gallery-img {
+    max-width: 100%;
+    max-height: 52vh;
+    object-fit: contain;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.7s ease;
+  }
+
+  #gallery-img.visible { opacity: 1; }
+
+  /* Caption */
+  #gallery-caption {
+    font-family: var(--font-b);
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    font-style: italic;
+    color: var(--cream);
+    text-align: center;
+    line-height: 1.7;
+    max-width: 640px;
+    min-height: 2.6em;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.6s ease 0.3s, transform 0.6s ease 0.3s;
+  }
+
+  #gallery-caption.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Step counter */
+  #step-counter {
+    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+  }
+
+  /* Nav controls */
+  .gallery-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+  }
+
+  .nav-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--cream);
+    padding: 0.55rem 1.4rem;
+    font-family: var(--font-b);
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: background 0.3s, border-color 0.3s, color 0.3s;
+  }
+
+  .nav-btn:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg);
+  }
+
+  .nav-btn:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+
+  .nav-btn:disabled:hover {
+    background: none;
+    border-color: var(--border);
+    color: var(--cream);
+  }
+
+  /* Step dots */
+  .step-dots {
+    display: flex;
+    gap: 0.45rem;
+  }
+
+  .step-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s, transform 0.3s;
+  }
+
+  .step-dot.active {
+    background: var(--gold);
+    transform: scale(1.5);
+  }
+
+  /* Mandarin aesthetic hint for Memory 4 */
+  .memory-card[data-memory="4"] .card-title {
+    letter-spacing: 0.08em;
+  }
+
+  #gallery-modal[data-memory="4"] #gallery-title::after {
+    content: ' 中国';
+    font-size: 0.75em;
+    color: var(--gold);
+    opacity: 0.6;
+    margin-left: 0.4em;
+  }
+
+  /* =============================================
+     RESPONSIVE
+  ============================================= */
+  @media (max-width: 700px) {
+    .hub-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    .hub-centre {
+      background: none;
+      padding: 0 1rem;
+      margin-bottom: 2rem;
+      border-radius: 0;
+    }
+
+    /* Override display:contents so it acts as a real grid container */
+    #cards-container {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .memory-card {
+      position: relative !important;
+      width: 100% !important;
+      grid-area: unset !important;
+      grid-column: unset !important;
+    }
+
+    .memory-card:nth-child(5) {
+      grid-column: 1 / -1 !important;
+      width: 50% !important;
+      margin: 0 auto;
+    }
+
+    .gallery-frame { max-height: 42vh; }
+    #gallery-img   { max-height: 42vh; }
+    .nav-btn       { padding: 0.5rem 1rem; font-size: 0.78rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- =============================================
+     SECTION 1: OPENING SLIDESHOW
+     ─────────────────────────────────────────
+     ↓ REPLACE INTRO IMAGE FILENAMES HERE ↓
+     Each slide = one image + one caption pair.
+     heading = big line, sub = smaller italic line.
+============================================= -->
+<div id="slideshow">
+
+  <!-- SLIDE 1 — replace "intro_1.jpg" with your filename -->
+  <div class="slide active" data-heading="Happy Birthday, you." data-sub="finally, a day as special as you are.">
+    <img src="m5_1.jpg" alt="" />
+  </div>
+
+  <!-- SLIDE 2 — replace "intro_2.jpg" with your filename -->
+  <div class="slide" data-heading="are you a camera?" data-sub="because every time i look at you, i smile.">
+    <img src="m2_1.jpg" alt="" />
+  </div>
+
+  <!-- SLIDE 3 — replace "intro_3.jpg" with your filename -->
+  <div class="slide" data-heading="excuse me, do you have a map?" data-sub="i keep getting lost in you.">
+    <img src="m3_1.jpg" alt="" />
+  </div>
+
+  <!-- SLIDE 4 — replace "intro_4.jpg" with your filename -->
+  <div class="slide" data-heading="is it your birthday?" data-sub="because the whole world got a little brighter today.">
+    <img src="m4_1.jpg" alt="" />
+  </div>
+
+  <!-- SLIDE 5 — replace "intro_5.jpg" with your filename -->
+  <div class="slide" data-heading="i made you something." data-sub="scroll down — it's better than cake.">
+    <img src="m1_5.jpg" alt="" />
+  </div>
+  <!-- END SLIDESHOW SLIDES -->
+
+  <div id="slide-caption">
+    <div class="slide-heading"></div>
+    <div class="slide-sub"></div>
+  </div>
+
+  <div id="slide-dots"></div>
+</div>
+
+<!-- =============================================
+     SECTION 2: MEMORY HUB
+============================================= -->
+<div id="hub">
+  <div class="hub-stage">
+
+    <!-- Centre anchor title -->
+    <div class="hub-centre">
+      <p class="hub-eyebrow">for you, always</p>
+      <h2 class="hub-title">Our Memories</h2>
+      <div class="hub-divider"></div>
+    </div>
+
+    <!-- Cards injected by JS into this container -->
+    <div id="cards-container"></div>
+
+  </div>
+</div>
+
+<!-- =============================================
+     GALLERY MODAL
+============================================= -->
+<div id="gallery-modal">
+  <div class="gallery-inner">
+    <div class="gallery-top">
+      <span class="gallery-chapter" id="gallery-chapter"></span>
+      <span id="gallery-title"></span>
+      <button id="close-btn" aria-label="Close">✕</button>
+    </div>
+
+    <div class="gallery-frame">
+      <img id="gallery-img" src="" alt="" />
+    </div>
+
+    <p id="gallery-caption"></p>
+
+    <div class="step-dots" id="step-dots"></div>
+
+    <div class="gallery-nav">
+      <button class="nav-btn" id="prev-btn">← Prev</button>
+      <span id="step-counter"></span>
+      <button class="nav-btn" id="next-btn">Next →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================
+   DATA — ALL MEMORIES DEFINED HERE
+   Edit image filenames and text lines below.
+================================================ */
+
+// ── MEMORY DEFINITIONS ──────────────────────────
+// Each memory: { title, tone, thumbnail, steps: [{img, line}] }
+
+const memories = [
+
+  /* ─── MEMORY 1 ─────────────────────────────────
+     Title, thumbnail, images and lines — edit here */
+  {
+    title: "endless mirror pics and selfies",
+    thumbnail: "m1_1.jpg",          // card cover image
+    steps: [
+      { img: "m1_1.jpg", line: "Words cannot describe how much excitement i have when i see a file attachment when i open my phone" },
+      { img: "m1_2.jpg", line: "Your pictures are the reason why my day is brighter" },
+      { img: "m1_3.jpg", line: "Who dis omG" },
+      { img: "m1_4.jpg", line: "Lick the phone screen nyam nyan" },
+      { img: "m1_5.jpg", line: "Oke sorry too much, anyways, my beautiful GIRLFRIEND I love you so much" },
+      { img: "m1_6.jpg", line: "You are my favourite notification, always." },
+    ]
+  },
+
+  /* ─── MEMORY 2 ─────────────────────────────────*/
+  {
+    title: "you're beautiful, even more than flowers and sunshines",
+    thumbnail: "m2_1.jpg",
+    steps: [
+      { img: "m2_1.jpg", line: "Words cannot describe how beautiful you are as a person" },
+      { img: "m2_2.jpg", line: "You push me to become a better self (so you don't leave me because i'm too ugly)" },
+      { img: "m2_3.jpg", line: "The reason why i need sunglasses is because how glowing you are" },
+      { img: "m2_4.jpg", line: "The reason why I take off my shirt sometimes because of how hot you are" },
+      { img: "m2_5.jpg", line: "Some are given water, but you are given the whole sea" },
+      { img: "m2_6.jpg", line: "Every room lights up a little more when you walk in." },
+      { img: "m2_7.jpg", line: "You are breathtaking — in every quiet, ordinary, extraordinary moment." },
+    ]
+  },
+
+  /* ─── MEMORY 3 ─────────────────────────────────*/
+  {
+    title: "jakarta back and forth",
+    thumbnail: "m3_1.jpg",
+    steps: [
+      { img: "m3_1.jpg", line: "Words cannot describe how I look forward every time I meet you in jakarta" },
+      { img: "m3_2.jpg", line: "As you always say that i complain when i drive, deep down i enjoy every second we spend when we're in a car ride" },
+      { img: "m3_3.jpg", line: "When i glimpse at you even though i'm risking the whole car from crashing, its a risk i'm willing to take because of how beautiful you are" },
+      { img: "m3_4.jpg", line: "The endless foodie journey – gaining weight and not burning any calories. Nice." },
+      { img: "m3_5.jpg", line: "And soon, we are going to have this permanently." },
+      { img: "m3_6.jpg", line: "Every drive, every detour, every shared meal — all of it leading to us." },
+    ]
+  },
+
+  /* ─── MEMORY 4 ─────────────────────────────────
+     Note: subtle Mandarin-inspired styling applied via CSS */
+  {
+    title: "zhong guo",
+    thumbnail: "m4_1.jpg",
+    mandarin: true,
+    steps: [
+      { img: "m4_1.jpg", line: "Words cannot describe how happy I was when we had our china trip" },
+      { img: "m4_2.jpg", line: "and how sad I was leaving you behind there" },
+      { img: "m4_3.jpg", line: "So many emotions that we experienced" },
+      { img: "m4_4.jpg", line: "the laughter, the sadness, the foodgasm, the confusion" },
+      { img: "m4_5.jpg", line: "(when i cannot speak mandarin)" },
+      { img: "m4_6.jpg", line: "But seeing you happy while you travel really puts a bag of satisfaction down my heart" },
+      { img: "m4_7.jpg", line: "I pray to God that we can experience this kind of journey again and ofcourse, without the good byes to a different continent" },
+    ]
+  },
+
+  /* ─── MEMORY 5 ─────────────────────────────────*/
+  {
+    title: "i love you to moon and back",
+    thumbnail: "m5_1.jpg",
+    steps: [
+      { img: "m5_1.jpg", line: "I love you to the moon and back" },
+      { img: "m5_2.jpg", line: "You are the one and my one and only" },
+      { img: "m5_3.jpg", line: "I'm so happy to see you grow" },
+      { img: "m5_4.jpg", line: "I'm also so happy that I was there throughout" },
+      { img: "m5_5.jpg", line: "I love you so much and I will always do" },
+      { img: "m5_6.jpg", line: "My baby, happy birthday to you :)" },
+    ]
+  },
+
+]; // ← END OF MEMORY DATA
+
+
+/* ================================================
+   SLIDESHOW LOGIC — per-slide captions
+================================================ */
+(function () {
+  const slides     = document.querySelectorAll('.slide');
+  const dotsEl     = document.getElementById('slide-dots');
+  const captionEl  = document.getElementById('slide-caption');
+  const headingEl  = captionEl.querySelector('.slide-heading');
+  const subEl      = captionEl.querySelector('.slide-sub');
+  const DURATION   = 5200; // ms per slide
+  let current      = 0;
+  let timer;
+
+  // Build dots
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' active' : '');
+    dotsEl.appendChild(d);
+  });
+
+  function showCaption(slide) {
+    captionEl.classList.remove('caption-visible', 'caption-exit');
+    headingEl.textContent = slide.dataset.heading || '';
+    subEl.textContent     = slide.dataset.sub || '';
+    // Trigger reflow then animate in
+    void captionEl.offsetWidth;
+    captionEl.classList.add('caption-visible');
+  }
+
+  function hideCaption(cb) {
+    captionEl.classList.remove('caption-visible');
+    captionEl.classList.add('caption-exit');
+    setTimeout(cb, 520);
+  }
+
+  function goTo(n) {
+    slides[current].classList.remove('active');
+    dotsEl.children[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    dotsEl.children[current].classList.add('active');
+    showCaption(slides[current]);
+  }
+
+  function next() {
+    if (current < slides.length - 1) {
+      hideCaption(() => goTo(current + 1));
+    } else {
+      clearInterval(timer);
+      hideCaption(endSlideshow);
+    }
+  }
+
+  function endSlideshow() {
+    const ss  = document.getElementById('slideshow');
+    const hub = document.getElementById('hub');
+    ss.classList.add('hidden');
+    hub.classList.add('visible');
+    setTimeout(() => { ss.style.display = 'none'; }, 1600);
+  }
+
+  // Show first caption
+  showCaption(slides[0]);
+  timer = setInterval(next, DURATION);
+})();
+
+
+/* ================================================
+   MEMORY HUB — build cards
+   Layout is handled by CSS grid (no JS positioning).
+================================================ */
+const container = document.getElementById('cards-container');
+
+memories.forEach((mem, i) => {
+  const card = document.createElement('div');
+  card.className = 'memory-card';
+  card.dataset.memory = i + 1;
+  card.innerHTML = `
+    <img class="card-thumb" src="${mem.thumbnail}" alt="${mem.title}" loading="lazy" />
+    <div class="card-info">
+      <div class="card-number">Chapter ${String(i + 1).padStart(2, '0')}</div>
+      <div class="card-title">${mem.title}</div>
+      <div class="card-cta">Open memory</div>
+    </div>
+  `;
+  card.addEventListener('click', () => openGallery(i));
+  container.appendChild(card);
+});
+
+
+/* ================================================
+   GALLERY MODAL LOGIC
+================================================ */
+const modal       = document.getElementById('gallery-modal');
+const titleEl     = document.getElementById('gallery-title');
+const chapterEl   = document.getElementById('gallery-chapter');
+const imgEl       = document.getElementById('gallery-img');
+const captionEl   = document.getElementById('gallery-caption');
+const stepDotsEl  = document.getElementById('step-dots');
+const counterEl   = document.getElementById('step-counter');
+const prevBtn     = document.getElementById('prev-btn');
+const nextBtn     = document.getElementById('next-btn');
+const closeBtn    = document.getElementById('close-btn');
+
+let currentMemory = null;
+let currentStep   = 0;
+
+function openGallery(memIndex) {
+  currentMemory = memIndex;
+  currentStep   = 0;
+  const mem     = memories[memIndex];
+
+  chapterEl.textContent = `Chapter ${String(memIndex + 1).padStart(2, '0')}`;
+  titleEl.textContent   = mem.title;
+
+  // Mandarin aesthetic toggle
+  if (mem.mandarin) {
+    modal.dataset.memory = 4;
+  } else {
+    delete modal.dataset.memory;
+  }
+
+  // Build step dots
+  stepDotsEl.innerHTML = '';
+  mem.steps.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (i === 0 ? ' active' : '');
+    stepDotsEl.appendChild(d);
+  });
+
+  modal.classList.add('open');
+  renderStep();
+}
+
+function renderStep() {
+  const mem  = memories[currentMemory];
+  const step = mem.steps[currentStep];
+  const total = mem.steps.length;
+
+  // Fade out
+  imgEl.classList.remove('visible');
+  captionEl.classList.remove('visible');
+
+  setTimeout(() => {
+    imgEl.src = step.img;
+    imgEl.onload = () => { imgEl.classList.add('visible'); };
+    // Fallback in case already cached
+    if (imgEl.complete) imgEl.classList.add('visible');
+
+    captionEl.textContent = step.line;
+    setTimeout(() => captionEl.classList.add('visible'), 80);
+
+    counterEl.textContent = `${currentStep + 1} / ${total}`;
+
+    // Dots
+    Array.from(stepDotsEl.children).forEach((d, i) => {
+      d.classList.toggle('active', i === currentStep);
+    });
+
+    prevBtn.disabled = currentStep === 0;
+    nextBtn.disabled = currentStep === total - 1;
+    nextBtn.textContent = currentStep === total - 1 ? 'The end ♡' : 'Next →';
+
+  }, 220);
+}
+
+prevBtn.addEventListener('click', () => {
+  if (currentStep > 0) { currentStep--; renderStep(); }
+});
+
+nextBtn.addEventListener('click', () => {
+  const total = memories[currentMemory].steps.length;
+  if (currentStep < total - 1) { currentStep++; renderStep(); }
+});
+
+closeBtn.addEventListener('click', closeGallery);
+
+modal.addEventListener('click', (e) => {
+  if (e.target === modal) closeGallery();
+});
+
+function closeGallery() {
+  modal.classList.remove('open');
+  imgEl.classList.remove('visible');
+  captionEl.classList.remove('visible');
+  setTimeout(() => { imgEl.src = ''; }, 600);
+}
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+  if (!modal.classList.contains('open')) return;
+  if (e.key === 'ArrowRight') nextBtn.click();
+  if (e.key === 'ArrowLeft')  prevBtn.click();
+  if (e.key === 'Escape')     closeGallery();
+});
+</script>
+</body>
+</html>
